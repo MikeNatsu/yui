@@ -2,7 +2,8 @@ FROM rust:1.63
 
 WORKDIR /app
 COPY . .
+ENV DISCORD_TOKEN=$DISCORD_TOKEN
 
 RUN cargo build --release
-CMD ["DISCORD_TOKEN=$DISCORD_TOKEN ./target/release/yui"]
+CMD ["./target/release/yui"]
 
