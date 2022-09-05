@@ -4,5 +4,5 @@ WORKDIR /app
 COPY . .
 
 RUN cargo build --release
-CMD ["./target/release/yui"]
+CMD ["DISCORD_TOKEN=$DISCORD_TOKEN ./target/release/yui"]
 
