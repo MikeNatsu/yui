@@ -1,21 +1,39 @@
+use std::collections::HashMap;
 use std::env;
 
 use dotenv::dotenv;
+use reqwest::header::HeaderMap;
 use serenity::async_trait;
 use serenity::framework::standard::macros::{command, group};
 use serenity::framework::standard::{CommandResult, StandardFramework};
 use serenity::model::channel::Message;
 use serenity::prelude::*;
 
+use serde::{Deserialize, Serialize};
+use serde_json::Result;
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Tunnel { 
+    id: String,
+    public_url: String,
+    proto: String,
+    region: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct TunnelsBody {
+    tunnels: Vec<Tunnel>,
+    uri: String,
+}
+
 #[group]
-#[commands(ping, clear)]
+#[commands(ping, clear, ngrok)]
 struct General;
 
 struct Handler;
 
 #[async_trait]
-impl EventHandler for Handler {
-}
+impl EventHandler for Handler {}
 
 #[tokio::main]
 async fn main() {
@@ -31,7 +49,6 @@ async fn main() {
         .await
         .expect("Error creating client");
 
-
     // start listening for events by starting a single shard
     if let Err(why) = client.start().await {
         println!("An error occurred while running the client: {:?}", why);
@@ -46,11 +63,32 @@ async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
 }
 
 #[command]
+async fn ngrok(ctx: &Context, msg: &Message) -> CommandResult {
+    let ngrok_api = env::var("NGROK_API_TOKEN").expect("Something went wrong");
+    println!("{:?}", ngrok_api);
+    let client = reqwest::Client::new();
+    let mut headers = HeaderMap::new(); 
+    headers.insert("Authorization", format!("Bearer {}", ngrok_api).parse().unwrap());
+    headers.insert("Ngrok-Version", "2".to_string().parse().unwrap());
+    let body = client.get("https://api.ngrok.com/tunnels").headers(headers).send().await;
+    let data = body.unwrap().json::<TunnelsBody>().await.unwrap();
+    println!("{:?}", data);
+    let urls: Vec<String> = data.tunnels.iter().map(|x| x.public_url.to_string()).collect();
+    let message_value = format!("Tunnels:\n{} ", urls.join("\n"));
+    msg.reply(ctx, message_value).await?;
+
+    Ok(())
+}
+
+#[command]
 async fn clear(ctx: &Context, msg: &Message) -> CommandResult {
     let guild_channel = msg.channel(ctx).await.unwrap().guild().unwrap();
     let messages = guild_channel.messages(ctx, |rtx| rtx.limit(100)).await?;
-    let messages_ids = messages.iter().map(|message|  message.id);
-    guild_channel.delete_messages(ctx, messages_ids).await.unwrap();
+    let messages_ids = messages.iter().map(|message| message.id);
+    guild_channel
+        .delete_messages(ctx, messages_ids)
+        .await
+        .unwrap();
 
     msg.reply(ctx, "Cleared").await?;
 
