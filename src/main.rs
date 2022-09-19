@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::env;
 
 use dotenv::dotenv;
@@ -10,7 +9,6 @@ use serenity::model::channel::Message;
 use serenity::prelude::*;
 
 use serde::{Deserialize, Serialize};
-use serde_json::Result;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Tunnel { 
