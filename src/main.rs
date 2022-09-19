@@ -63,14 +63,12 @@ async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
 #[command]
 async fn ngrok(ctx: &Context, msg: &Message) -> CommandResult {
     let ngrok_api = env::var("NGROK_API_TOKEN").expect("Something went wrong");
-    println!("{:?}", ngrok_api);
     let client = reqwest::Client::new();
     let mut headers = HeaderMap::new(); 
     headers.insert("Authorization", format!("Bearer {}", ngrok_api).parse().unwrap());
     headers.insert("Ngrok-Version", "2".to_string().parse().unwrap());
     let body = client.get("https://api.ngrok.com/tunnels").headers(headers).send().await;
     let data = body.unwrap().json::<TunnelsBody>().await.unwrap();
-    println!("{:?}", data);
     let urls: Vec<String> = data.tunnels.iter().map(|x| x.public_url.to_string()).collect();
     let message_value = format!("Tunnels:\n{} ", urls.join("\n"));
     msg.reply(ctx, message_value).await?;
