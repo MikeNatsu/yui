@@ -34,7 +34,7 @@ struct McuData {
 }
 
 #[group]
-#[commands(ping, clear, ngrok, mcu)]
+#[commands(ping, clear, ngrok, mcu, daniel)]
 struct General;
 
 struct Handler;
@@ -66,6 +66,13 @@ async fn main() {
 #[command]
 async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
     msg.reply(ctx, "Pong!").await?;
+
+    Ok(())
+}
+
+#[command]
+async fn daniel(ctx: &Context, msg: &Message) -> CommandResult {
+    msg.reply(ctx, "Daniel te amo mucho goloso <3").await?;
 
     Ok(())
 }
